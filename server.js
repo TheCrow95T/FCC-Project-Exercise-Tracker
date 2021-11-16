@@ -73,7 +73,9 @@ app.get('/api/users', (req, res,done) => {
 //add exercise
 app.post('/api/users/:_id/exercises', (req, res,done) => {
   //obtain from index html
-  let {uid,description,duration,date} = req.body;
+  let {description,duration,date} = req.body;
+  let {_id} = req.params;
+
   if (!date){
     date = new Date();
     date = date.toDateString();
@@ -83,7 +85,7 @@ app.post('/api/users/:_id/exercises', (req, res,done) => {
   };
 
   //update by adding exercises submitted
-  const exercise = Exercise.findById(uid, (err, exercise) => {
+  const exercise = Exercise.findById(_id, (err, exercise) => {
     if (err) return console.log(err);
     if (!exercise){return res.json({"_id":"unfound"})};
 
@@ -96,7 +98,7 @@ app.post('/api/users/:_id/exercises', (req, res,done) => {
     });
     
     res.json({
-    _id: uid,
+    _id: _id,
     username: exercise.username,
     date,
     duration: parseInt(duration),
@@ -110,16 +112,20 @@ app.post('/api/users/:_id/exercises', (req, res,done) => {
   });
 });
 
-//
-
+//list log
 app.get('/api/users/:_id/logs', (req, res,done) => {
   const {_id} = req.params;
+  let {from, to, limit}= req.query;
+
 
   Exercise.findById(_id, (err, exercise) => {
     if (err) return console.log(err);
     if (!exercise){return res.json({"_id":"unfound"})};
 
-    exercise.log.map(a=>a.duration=parseInt(a.duration))
+    exercise.log.map(a=>a.duration=parseInt(a.duration));
+    if (from){exercise.log.filter(a => a.date>=from)};
+    if (to){exercise.log.filter(a => a.date>=to)};
+    if (limit){exercise.log=exercise.log.slice(0,limit)}
     
     res.json({
       _id: _id,
